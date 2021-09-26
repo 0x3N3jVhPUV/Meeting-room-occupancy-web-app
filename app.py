@@ -16,30 +16,8 @@ client = MongoClient(
 db = client.occupancyRecords
 collection = db.occupancy
 
-# curl --header "Content-Type: application/json" -X POST -d '{"sensor":"abc","ts":"2018-11-14T13:34:49Z","in":3,"out":2}' http://127.0.0.1:5000/api/webhook
-@app.route("/api/webhook", methods=["POST"])
-def post_data():
-    body = request.json
-    In = body["in"]
-    Out = body["out"]
-    sensor = body["sensor"]
-    Ts = body["ts"]
-    db["data"].insert_one({"sensor": sensor, "In": In, "Out": Out, "Ts": Ts})
-    db["sensors"].insert_one({"sensor": sensor})
-    db["Ts"].insert_one({"Ts": Ts})
-    return jsonify(
-        {
-            "status": "Data is posted to MongoDB!",
-            "In": In,
-            "Out": Out,
-            "sensor": sensor,
-            "Ts": Ts,
-        }
-    )
-
-
-def full_List_Maker(sensors_store, ts_store):
-    sensor_List = sensor_dict_maker(sensors_store)
+def full_list_maker(sensors_store, ts_store):
+    sensor_List = sensors_dict_maker(sensors_store)
     ts_List = ts_dict_maker(ts_store)
     Full_list = []
     Full_list.append(sensor_List)
@@ -47,7 +25,7 @@ def full_List_Maker(sensors_store, ts_store):
     return Full_list
 
 
-def sensor_dict_maker(data_store):
+def sensors_dict_maker(data_store):
     dataJson = []
     for data in data_store:
         if data.get("sensor"):
@@ -80,6 +58,26 @@ def dataJsonMaker(Data_store):
         dataJson.append(dataDict)
     return dataJson
 
+# curl --header "Content-Type: application/json" -X POST -d '{"sensor":"abc","ts":"2018-11-14T13:34:49Z","in":3,"out":2}' http://127.0.0.1:5000/api/webhook
+@app.route("/api/webhook", methods=["POST"])
+def post_data():
+    body = request.json
+    In = body["in"]
+    Out = body["out"]
+    sensor = body["sensor"]
+    Ts = body["ts"]
+    db["data"].insert_one({"sensor": sensor, "In": In, "Out": Out, "Ts": Ts})
+    db["sensors"].insert_one({"sensor": sensor})
+    db["Ts"].insert_one({"Ts": Ts})
+    return jsonify(
+        {
+            "status": "Data is posted to MongoDB!",
+            "In": In,
+            "Out": Out,
+            "sensor": sensor,
+            "Ts": Ts,
+        }
+    )
 
 # curl -X GET 'http://127.0.0.1:5000/api/occupancy'
 # or
@@ -97,7 +95,7 @@ def occupancy():
 
     dataJson = dataJsonMaker(data_store)
     c = Counter()
-    Full_list = full_List_Maker(sensors_store, ts_store)
+    Full_list = full_list_maker(sensors_store, ts_store)
 
     if sensor_name and ts_value:
         for elem in dataJson:
