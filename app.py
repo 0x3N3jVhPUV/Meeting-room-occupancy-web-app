@@ -17,44 +17,46 @@ db = client.occupancyRecords
 collection = db.occupancy
 
 def full_list_maker(sensors_store, ts_store):
-    sensor_List = sensors_dict_maker(sensors_store)
-    ts_List = ts_dict_maker(ts_store)
-    Full_list = []
-    Full_list.append(sensor_List)
-    Full_list.append(ts_List)
-    return Full_list
+    sensor_List = sensors_list_maker(sensors_store)
+    ts_List = ts_list_maker(ts_store)
+    full_list = []
+    full_list.append(sensor_List)
+    full_list.append(ts_List)
+    return full_list
 
+def remove_dupes(mylist):
+    newlist = [mylist[0]]
+    for e in mylist:
+        if e not in newlist:
+            newlist.append(e)
+    return newlist
 
-def sensors_dict_maker(data_store):
+def sensors_list_maker(data_store):
     dataJson = []
     for data in data_store:
-        if data.get("sensor"):
-            sensor = data["sensor"]
-            dataJson.append(sensor)
-    data = list(dict.fromkeys(dataJson))
-    dataDict = {"sensors_list": data}
-    return dataDict
+        sensor = data["sensor"]
+        dataDict = {"sensor": sensor}
+        dataJson.append(dataDict)
+    cleanDataJson = remove_dupes(dataJson)    
+    return cleanDataJson
     
-def ts_dict_maker(data_store):
+def ts_list_maker(data_store):
     dataJson = []
     for data in data_store:
-        if data.get("Ts"):
-            Ts = data["Ts"]
-            dataJson.append(Ts)
-    data = list(dict.fromkeys(dataJson))
-    dataDict = {"ts_list": data}
-    return dataDict
-
+        Ts = data["Ts"]
+        dataDict = {"Ts": Ts}
+        dataJson.append(dataDict)
+    cleanDataJson = remove_dupes(dataJson)    
+    return cleanDataJson
 
 def dataJsonMaker(Data_store):
     dataJson = []
     for data in Data_store:
-        id = data["_id"]
         sensor = data["sensor"]
         In = int(data["In"])
         Out = int(data["Out"])
         Ts = data["Ts"]
-        dataDict = {"id": str(id), "sensor": sensor, "In": In, "Out": Out, "Ts": Ts}
+        dataDict = {"sensor": sensor, "In": In, "Out": Out, "Ts": Ts}
         dataJson.append(dataDict)
     return dataJson
 
@@ -95,7 +97,7 @@ def occupancy():
 
     dataJson = dataJsonMaker(data_store)
     c = Counter()
-    Full_list = full_list_maker(sensors_store, ts_store)
+    full_list = full_list_maker(sensors_store, ts_store)
 
     if sensor_name and ts_value:
         for elem in dataJson:
@@ -103,19 +105,18 @@ def occupancy():
                 inside = int(elem.get("In")) - int(elem.get("Out"))
                 break
         Dict = {"inside": inside}
-        Full_list.append(Dict)
-        return jsonify(Full_list)
+        full_list.append(Dict)
+        return jsonify(full_list)
     elif sensor_name:
         for elem in dataJson:
             if elem["sensor"] == sensor_name:
                 c.update(elem)
         inside = int(c.get("In")) - int(c.get("Out"))
         Dict = {"inside": inside}
-        Full_list.append(Dict)
-        return jsonify(Full_list)
+        full_list.append(Dict)
+        return jsonify(full_list)
     else:
-        return jsonify(Full_list)
-
+        return jsonify(full_list)
 
 if __name__ == "__main__":
     app.debug = True
